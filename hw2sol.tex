@@ -1,0 +1,73 @@
+\documentclass[10pt]{article}
+	
+\usepackage[margin=1in]{geometry}		% For setting margins
+\usepackage{amsmath}				% For Math
+\usepackage{fancyhdr}				% For fancy header/footer
+\usepackage{graphicx}				% For including figure/image
+\usepackage{float}
+\usepackage{hyperref}
+\usepackage{tabto}
+\usepackage{cancel}					% To use the slash to cancel out stuff in work
+% avoid all eq numbering via:
+% \usepackage{mathtools}
+% \mathtoolsset{showonlyrefs}
+
+\usepackage{cite}
+\usepackage{url}
+\usepackage{amssymb}                % To include mathbb symbols
+\usepackage{graphicx}               % In preamble
+\newcommand{\mcG}{\mathcal{G}}
+\newcommand{\mcU}{\mathcal{U}}
+\newcommand{\mcV}{\mathcal{V}}
+
+
+% Set up fancy header/footer
+\pagestyle{fancy}
+\fancyhead[LO,L]{Bionics and Wearable Robotics 0360108}
+\fancyhead[CO,C]{Homework 2}
+\fancyhead[RO,R]{\today}
+\fancyfoot[LO,L]{}
+\fancyfoot[CO,C]{\thepage}
+\fancyfoot[RO,R]{}
+\renewcommand{\headrulewidth}{0.1pt}
+\renewcommand{\footrulewidth}{0.1pt}
+% \renewcommand{\thesubsection}{(\roman{subsection})}
+\renewcommand{\thesubsubsection}{(\roman{subsubsection})}
+
+%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{document}
+\begin{table}[h]
+    \centering
+    \begin{tabular}{l l l}
+        \hline
+        Name & ID & Email \\
+        \hline
+        Elad Siman Tov & 209047505 & elad.sim@campus.technion.ac.il \\
+        \hline
+        Eitan Gerber & 204925481 & eitangerber@campus.technion.ac.il \\
+        \hline
+    \end{tabular}
+    \label{tab:personal_info}
+\end{table}
+
+% -------------------------------------- %
+% -------------- NOTES ----------------- %
+% -------------------------------------- %
+\section{Gait Event Method}
+
+
+\section{Drift Compensation}
+
+\section{Real Time Implementation}
+
+
+\section{Comparison to Built in estimation}
+
+
+
+% -------------------------------------- %
+\noindent That's all... \hfill $\nabla$ 
+\bibliographystyle{IEEEtran} 
+\bibliography{ref}
+\end{document}
