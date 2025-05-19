@@ -54,7 +54,7 @@
 % -------------------------------------- %
 % -------------- NOTES ----------------- %
 % -------------------------------------- %
-\section{Gait Event Detection Method}
+\section{Gait Event Detection Method - \href{https://github.com/eladsimantov/Wearable-Robotics/blob/main/HW2/gaitEventDetector.ino}{Link To Code}}
 To identify Heel Strike (HS) and Toe Off (TO) we placed the IMU on the ankle, and based the detection on two states logic with the two gait events to toggle between the states. Note that to toggle between states it is sufficient to use a single memory bit (such as HS) but we used both for clarity of our program. The states and their transitions are shown in the state diagram in Figure \ref{fig:stateDiagram}.
 The default state is during stance ($\mathcal{ST}$), after HS triggers and before TO. The second state is swing ($\mathcal{SW}$), when the foot is above ground.  
 At both gait events, we assumed that the acceleration will record a peak, so we added a threshold of 11.5 $m/s^2$ for entering swing and 11 $m/s^2$ to transition to stance. At HS, we assume that the foot angle is negative with respect to the ground (assuming positive for plantar-flexion) and at TO we assume a positive angle. In addition, we used the switching of signs of the angular velocities for the state transitions. Once each state is entered we added a delay of $\Delta T\ge150\,[ms]$ under which no transition can follow to avoid rapid state transitions. 
