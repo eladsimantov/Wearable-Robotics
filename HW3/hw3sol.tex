@@ -1,0 +1,77 @@
+\documentclass[10pt]{article}
+	
+\usepackage[margin=1in]{geometry}		% For setting margins
+\usepackage{amsmath}				% For Math
+\usepackage{fancyhdr}				% For fancy header/footer
+\usepackage{graphicx}				% For including figure/image
+\usepackage{float}
+\usepackage{hyperref}
+\usepackage{tabto}
+\usepackage{cancel}					% To use the slash to cancel out stuff in work
+% avoid all eq numbering via:
+% \usepackage{mathtools}
+% \mathtoolsset{showonlyrefs}
+
+\usepackage{cite}
+\usepackage{url}
+\usepackage{amssymb}                % To include mathbb symbols
+\usepackage{graphicx}               % In preamble
+\newcommand{\mcG}{\mathcal{G}}
+\newcommand{\mcU}{\mathcal{U}}
+\newcommand{\mcV}{\mathcal{V}}
+\hypersetup{colorlinks=true,
+            urlcolor=blue}
+            
+% Set up fancy header/footer
+\pagestyle{fancy}
+\fancyhead[LO,L]{Bionics and Wearable Robotics 0360108}
+\fancyhead[CO,C]{Homework 3}
+\fancyhead[RO,R]{\today}
+\fancyfoot[LO,L]{}
+\fancyfoot[CO,C]{\thepage}
+\fancyfoot[RO,R]{}
+\renewcommand{\headrulewidth}{0.1pt}
+\renewcommand{\footrulewidth}{0.1pt}
+% \renewcommand{\thesubsection}{(\roman{subsection})}
+\renewcommand{\thesubsubsection}{(\roman{subsubsection})}
+
+%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{document}
+\begin{table}[h]
+    \centering
+    \begin{tabular}{l l l}
+        \hline
+        Name & ID & Email \\
+        \hline
+        Elad Siman Tov & - & elad.sim@campus.technion.ac.il \\
+        \hline
+        Eitan Gerber & - & eitangerber@campus.technion.ac.il \\
+        \hline
+    \end{tabular}
+    \label{tab:personal_info}
+\end{table}
+
+% -------------------------------------- %
+% --------- EMG Filtering -------------- %
+% -------------------------------------- %
+\section{EMG Filtering}
+Since we are interested in using the EMG signals to control the servo motor, we had to process and filter them in a real time implementation. We followed the steps given below
+\begin{itemize}
+    \item Apply a 4th order butterworth BPF with the cutoffs at 10Hz and 200Hz for the high pass and low pass filters respectively. 
+    \item Rectify the filtered signal
+    \item Compute the Root Mean Squared moving average via an additional LPF with a 50 samples window.
+\end{itemize}
+Note that we used a \href{https://github.com/tttapa/Arduino-Filters}{pre existing library} to simplify our implementation 
+% -------------------------------------- %
+% -- Flexion Extension Identification -- %
+% -------------------------------------- %
+\section{Flexion Extension Identification}
+
+% -------------------------------------- %
+% --- Servo Motor High Level Control --- %
+% -------------------------------------- %
+\section{Servo Motor High Level Control}
+
+
+\end{document}
