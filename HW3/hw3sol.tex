@@ -54,7 +54,8 @@
     \end{tabular}
     \label{tab:personal_info}
 \end{table}
-Our full code (.ino file) is published on Github for reference.
+\noindent Our full code (.ino file) is \href{https://github.com/eladsimantov/Wearable-Robotics/blob/main/HW3/EMG_servo_control.ino}{published on Github} for reference.\\
+A video of the servo motor successfully responding to our EMG inputs \href{https://technionmail-my.sharepoint.com/:v:/g/personal/eitangerber_campus_technion_ac_il/Ead1dbEn8xNEuNcpJJbua7sBZmVPV9wEbOwiU09-S7oXpg?e=Y54jJX}{can be found here}.
 
 % -------------------------------------- %
 % --------- EMG Filtering -------------- %
@@ -74,8 +75,7 @@ Note that we used a \href{https://github.com/tttapa/Arduino-Filters}{pre existin
 % -- Flexion Extension Identification -- %
 % -------------------------------------- %
 \section{Motion Direction Identification}
-To identify motion direction we used the following logic. Given the filtered measurements (with a relative gain applied) of muscle 1 ($v_1$) and muscle 2 ($v_2$), if either $v_1$ or $v_2$ are greater than a hard coded threshold $b$ we look for a direction based on which one is larger (Direction = $\pm1$), otherwise, i.e. if both signals are below the threshold, no direction is assigned (Direction = $0$) and the motor will remain in place .
-
+To identify motion direction we used the following logic. Given the filtered measurements (with a relative gain applied) of muscle 1 ($v_1$) and muscle 2 ($v_2$), if either $v_1$ or $v_2$ are greater than a hard coded threshold $b$ we look for a direction based on which one is larger (Direction = $\pm1$), otherwise, i.e. if both signals are below the threshold, no direction is assigned (Direction = $0$) and the motor will remain in place. Note that we used the RGB led on the PCB to signal the direction change.
 \begin{algorithm}
 \caption{Direction Identification Based on Muscle Activity}
 \begin{algorithmic}[1]
@@ -91,7 +91,7 @@ To identify motion direction we used the following logic. Given the filtered mea
 \ENDIF
 \end{algorithmic}
 \end{algorithm}
-In addition, we used the RGB led on the PCB to signal the direction change.
+
 % -------------------------------------- %
 % --- Servo Motor High Level Control --- %
 % -------------------------------------- %
@@ -103,8 +103,7 @@ We used the \href{https://docs.arduino.cc/libraries/servo/}{Arduino Servo librar
 % -------------------------------------- %
 \section{Experimental Setup}
 For our experiments we chose to place one EMG sensor over the proximal end of the Flexor Carpum Ulnaris muscle about $50[mm]$ from the elbow joint, and the other EMG sensor over the medial side of the Biceps' distal end, about $100[mm]$ from the elbow joint. Both sensors were placed on the right arm with the aid of the provided BSS adhesive electrodes, after cleaning the attachment sites with isopropyl alcohol. Additionally, to help reduce the effects of electromagnetic noise on the sensors and the rest of the system, we made sure that the person being measured was seated at a distance of at least $750[mm]$ from other electronic equipment (such as computers, monitors and smartphones) and that they were not in contact with the experimental system except via the electrodes.\\
-We'll point out that the no-contact requirement is the result of an incident during one of our tests, where the subject touched the servo motor's casing with their contra-lateral hand, causing the signal (as read by the Teensy board) to become unusable and the motor to oscillate violently. A similar phenomenon was observed but not filmed (as opposed to the above incident) when the other person was in contact with the PCB's stand and the servo motor when we moved between locations with the system turned-on.\\
-As a method of visually confirming our algorithm's state-switching, we added code to swap the PCB's built-in RGB-LED from green to red - this also helped us fine-tune the required gains and threshold without endangering the servo motor. 
-
+We'll point out that the no-contact requirement is the result of an \href{https://technionmail-my.sharepoint.com/:v:/g/personal/eitangerber_campus_technion_ac_il/EVsCIgRIn5hEmBGYrdGdkJ8B6_X0lppvQQD-a1CJ28Dyhg?e=8qZflR}{incident during one of our tests}, where the subject touched the servo motor's casing with their contra-lateral hand, causing the signal (as read by the Teensy board) to become unusable and the motor to oscillate violently. A similar phenomenon was observed but not filmed (as opposed to the above incident) when the other person was in contact with the PCB's stand and the servo motor when we moved between locations with the system turned-on.\\
+As a method of visually confirming our algorithm's state-switching, we added code to \href{https://technionmail-my.sharepoint.com/:v:/g/personal/eitangerber_campus_technion_ac_il/ET7hfGO1465PkBLXUa4EZSkBaZYCX3XrYBRLPdEY4ES-5g?e=u6yzTm}{swap the PCB's built-in RGB-LED from green to red} - this also helped us fine-tune the required gains and threshold without endangering the servo motor. 
 
 \end{document}
