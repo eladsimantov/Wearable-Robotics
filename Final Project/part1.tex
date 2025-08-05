@@ -61,11 +61,12 @@ A video of the hand successfully opening and closing based on the potentiometer 
 % --------- Assembly -------------- %
 % -------------------------------------- %
 \section*{Assembly}
-During the assembly process we encountered some difficulties in ...
+We 3d printed and assembled a left hand according to the official guides.
+During the assembly process we encountered some difficulties in understanding the instructions that were inconsistent and frequently skipped steps. We used the older version for the pulleys, which interfaces with the plastic connecting plate that comes with the servo motors as shown in figure \ref{fig:pullies}. Our final assembly is shown in figure \ref{fig:pullies}
 
 \section*{Operation}
 To demonstrate the operation of the hand we have programmed the micro-controller to map the potentiometer signal range (1024 bits) to the appropriate range of motion we have predefined for each servo motor corresponding to each finger or the wrist. 
 The wrist servo motor was reset at its mid range position to allow for both supination and pronation actions. The rest of the servo motors (fingers) were reset to their zero position to avoid slacking the string driving each finger.
-The video demonstrates the successful opening and closing of the hand. 
+The video demonstrates the successful opening and closing of the hand before closing the cover of the hand to show the pulleys in action.
 
 \end{document}
