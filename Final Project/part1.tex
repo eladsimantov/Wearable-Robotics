@@ -55,14 +55,21 @@
     \label{tab:personal_info}
 \end{table}
 \noindent Our code (.ino file) is \href{https://github.com/eladsimantov/Wearable-Robotics/blob/main/Final%20Project/Potentiometer_Servos.ino}{published on Github} for reference.
-A video of the hand successfully opening and closing based on the potentiometer \href{https://technionmail-my.sharepoint.com/:v:/g/personal/eitangerber_campus_technion_ac_il/Ead1dbEn8xNEuNcpJJbua7sBZmVPV9wEbOwiU09-S7oXpg?e=Y54jJX}{can be found here}.
+A video of the hand successfully opening and closing based on the potentiometer \href{https://technionmail-my.sharepoint.com/:v:/g/personal/eitangerber_campus_technion_ac_il/EebtvmOLvtBAnYd-IpQqAJ0BJ1s71PZn7ucrhZaetBrTBg?e=nfoBjf}{can be found here}.
 
 % -------------------------------------- %
 % --------- Assembly -------------- %
 % -------------------------------------- %
 \section*{Assembly}
 We 3d printed and assembled a left hand according to the official guides.
-During the assembly process we encountered some difficulties in understanding the instructions that were inconsistent and frequently skipped steps. We used the older version for the pulleys, which interfaces with the plastic connecting plate that comes with the servo motors as shown in figure \ref{fig:pullies}. Our final assembly is shown in figure \ref{fig:pullies}
+During the assembly process we encountered some difficulties in understanding the instructions that were inconsistent and frequently skipped steps. We used the older version for the pulleys, which interfaces with the plastic connecting plate that comes with the servo motors as shown in figure \ref{fig:pulleys}.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.5\linewidth]{Final Project/pulleys.jpg}
+    \caption{The old version of the pulleys that were using in our robotic hand.}
+    \label{fig:pulleys}
+\end{figure}
 
 \section*{Operation}
 To demonstrate the operation of the hand we have programmed the micro-controller to map the potentiometer signal range (1024 bits) to the appropriate range of motion we have predefined for each servo motor corresponding to each finger or the wrist. 
