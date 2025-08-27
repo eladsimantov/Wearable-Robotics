@@ -4,6 +4,7 @@
 \usepackage{amsmath}				% For Math
 \usepackage{fancyhdr}				% For fancy header/footer
 \usepackage{graphicx}				% For including figure/image
+\usepackage{subcaption}
 \usepackage{float}
 \usepackage{hyperref}
 \usepackage{tabto}
@@ -57,82 +58,104 @@
     \label{tab:personal_info}
 \end{table}
 
+\section*{Abstract}
+Our major assignments for the second part of the project were to characterize the hand we had constructed in the first part, and to then implement the high-level controller we had proposed. In practice, characterization of the hand required creating calibration curves for a force sensitive resistor and for the hall effect sensors in each finger, while implementing the high-level controller required gathering and processing data followed by creating a classifier and then testing it.\\
+While testing the classifier we encountered a number of issues, and pivoted to implementing a finite state machine based on the classifier's outputs. This state machine also encountered a number of issues.
 
-
-\section*{Finger Force Characterization}
-% Put several weights on the FSR and take analog readings in order to calibrate it.
-% Evaluate the force each finger can apply when the hand is closed using the FSR.
-% Take readings of the FSR and hall effect sensor in order to calibrate the sensors to the forces applied on each finger.
-
-The first step in characterizing the force produced by the fingers was confirming the correct wiring and operation of the Hall-effect sensors mounted in each fingertip. We did this by writing a short script that "printed" the Hall-effect sensors' output over the Teensy Board's serial connection, and then pressing on each fingertip separately while monitoring the output. The script (.ino file) is \href{https://github.com/eladsimantov/Wearable-Robotics/blob/main/Final%20Project/hallSensorsTest.ino}{published on Github} for reference. During this test we saw that while the sensors theoretically function with a 12-bit output depth, in reality due to their placement and the hand's design the output has a range of no more than 30 or 40 values.
-
-% write here the measurement of the fingers
-To evaluate the force each finger can apply we fixed the arm and place the FSR on each fingertip. Then we measured the FSR readings and we found that all fingers exceeded the Full Scale values so we concluded that each finger could theoretically produce a force beyond the measured peak value of 0.8 kgf. To be able to use the Hall effect sensors reading to estimate the corresponding force on the fingertip, we measured Hall sensor readings with FSR reading for multiple measurements. We applied a curve fit to estimate the 
-
-We can then use the calibration formula to estimate the force online. 
-
-
-
-\section*{Classification Overview}
-Our \textit{goal} is to implement a classifier to predict five grasps from features based on three sEMG sensors (see figure \ref{fig:classifier}).
-Our motivation is primarily to practice and learn about classification in a practical problem, which we hope will eNaBLe us to apply better algorithms in our research in the prosthetics field. We chose grasps that would be feasible to implement on our hand, given that it is underactuated as it only has 1 motor per finger. The high level control was designed to switch between grasps by passing through a neutral position for the hand as illustrated in figure \ref{fig:classifier}. 
+\section{Introduction}
+This report covers the second part of the final project in the spring 2025 "Bionics and Wearable Robotics - 0360108" class. In the first part of the project we were tasked with building the left-hand version of the InMoov i2 hand \cite{langevin_inmoov_nodate} and demonstrating that it works. Additionally, we were asked to propose an advanced controller or design improvement to implement in the second part.\\
+We chose to propose a high-level controller that uses surface electromyography (sEMG) to achieve five different grasps. The grasps themselves were chosen from figure \ref{fig:grasps} and the descriptions in Feix et al. \cite{feix_grasp_2016}, based on the muscles they activate and the likelihood of the InMoov hand being physically able to perform them. Ultimately, the hand is an underactuated device, so we were limited to picking grasps that require larger and less dexterous motions, primarily "Power" grasps. 
 
 \begin{figure}[H]
 \centering
-    \includegraphics[width=0.8\linewidth]{Final Project/grasps.png}
+    \includegraphics[width=0.75\linewidth]{Final Project/grasps.png}
     \caption{The predetermined grasps that were classified and implemented in our robotic hand. Adapted from \cite{feix_grasp_2016}.}
     \label{fig:grasps}
 \end{figure}
 
+Our original goal was to implement a classifier to predict five grasps (and a "bonus" sixth one) from features based on three sEMG sensors as shown in \ref{fig:classifier}. The high level control was designed to switch between grasps by passing through a neutral position for the hand. Our motivation is primarily to practice and learn about classification in a practical problem, which we hope will eNaBLe us to apply better algorithms in our research in the prosthetics field. 
+
+
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.7\linewidth]{Final Project/classifier_updated.png}
+    \includegraphics[width=0.75\linewidth]{Final Project/classifier_updated.png}
     \caption{The classifier determines the grasp and switches via the neutral position.}
     \label{fig:classifier}
 \end{figure}
 
 
-\section*{Methods}
-The scope of this work included choosing the correct placement of sEMG sensors for our chosen scope, Data recording and preparation from scratch, feature extraction and classification, implementation and creating servo motor profiles per grasp. 
-Selecting the appropriate tool for any project is important, and in our use case we chose to use MATLAB. This is mainly due to its capability to assist in almost all phases of the project (data processing, feature extraction, classification training and even its implementation).     
 
-\subsection*{sEMG Placement and Data Recording}
-All machine-learning based classifiers requires training in order to classify accurately, and that training requires gathering training data. A key requirement of the training data is that it be as similar as possible to the data the classifier will be working with later, and if possible even encompass a wider range of data. To that end, before starting to record data we had to define our sEMG sensor locations. Working under the constraint of having only three sensors (due to limitations of the class's PCB), we chose three sites that we felt were the most likely to provide clean signals, and with enough of a difference between grasps to improve our classification efforts. The sites were picked based both on existing research \cite{hermens_european_1999,batzianoulis_decoding_2018} and based on the results of manual palpation while performing the various grasps.
-The final sites chosen for our sEMG sensors were the Flexor Carpum Ulnaris and Flexor Carpum Radialis as seen in figure \ref{fig:flexorSensors}, and the Smaller Forearm Extensors as seen in figure \ref{fig:extensorSensors}.\\
-The sEMG sensors we used in the project are the same sensors from the third homework assignment we previously submitted, except this time we elected to use them in "ENV" (envelope) mode to simplify the computational load on the Teensy 4.0 board we worked with.
+\section{Methods}
+% The scope of this work included choosing the correct placement of sEMG sensors for our chosen scope, Data recording and preparation from scratch, feature extraction and classification, implementation and creating servo motor profiles per grasp. 
+% Selecting the appropriate tool for any project is important, and in our use case we chose to use MATLAB. This is mainly due to its capability to assist in almost all phases of the project (data processing, feature extraction, classification training and even its implementation).     
+
+\subsection{Hand characterization}
+% Put several weights on the FSR and take analog readings in order to calibrate it.
+% Evaluate the force each finger can apply when the hand is closed using the FSR.
+% Take readings of the FSR and hall effect sensor in order to calibrate the sensors to the forces applied on each finger.
+
+The first step in characterizing the hand was confirming the correct wiring and operation of the Hall-effect sensors mounted in each fingertip. We did this by writing a short script that "printed" the Hall-effect sensors' output over the Teensy Board's serial connection, and then pressing on each fingertip separately while monitoring the output. The script (.ino file) is \href{https://github.com/eladsimantov/Wearable-Robotics/blob/main/Final%20Project/hallSensorsTest.ino}{published on Github} for reference. During this test we saw that while the sensors theoretically function with a 12-bit output depth, in reality due to their placement and the hand's design they are limited to a fraction of their output range.\\
+Next, we created a calibration curve for the force sensitive resistor (FSR), finding the relation between the force acting on the resistor to its output. To calibrate the FSR we designed a testing jig as shown in figure \ref{fig:calibJig}, which uses four smooth steel pins as guides and focuses the mass of the upper part of the jig and its contents onto a circle slightly smaller than the FSR. 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.5\linewidth]{Final Project/sEMG_Flexors.jpg}
+    \includegraphics[width=0.3\linewidth]{Final Project/testingJig.jpg}
+    \caption{The calibration jig we designed for calibrating the FSR.}
+    \label{fig:calibJig}
+\end{figure}
+
+We then ran the script \href{https://github.com/eladsimantov/Wearable-Robotics/blob/main/Final%20Project/fsrReadCalib.ino}{fsrReadCalib.ino} while the computer was connected to a Teensy 4.0 board, which in turn was connected to a small PCB with a potentiometer and amplifier leading to the FSR itself. After tuning the potentiometer and amplifier so the FSR's board outputs a fairly steady value, we (following Arik's advice) added a bias to the script so that the FSR's effective output range is 0-1005 - such that under almost zero load (just the jig), the FSR output a value of 2. Once the FSR's "baseline" had been set, we progressively added weights to the test jig, recording the output under the effects of 57 masses as can be seen in figure \ref{fig:fsrCalibMeas}, ranging from 0 added grams to 800 added grams. While we didn't max-out the FSR at any point, we stopped adding mass as the jig could not hold any more weights without losing stability and having some of the weights fall out. We decided that due to the initial steps of the calibration and due to the jig's low mass (3D-printed PLA at 15\% infill), we would treat the jig as massless and not take it into account in our calculations.
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.75\linewidth]{Final Project/fsrCalibrationExample.jpeg}
+    \caption{The process of calibrating the FSR, we see weights in the testing jig which is compressing the FSR, while the the computer (left) shows the FSR's outputs in near-real time.}
+    \label{fig:fsrCalibMeas}
+\end{figure}
+
+We then turned to creating calibration curves for the hall effect sensors relative to to the FSR, so that we could eventually create a calibration curve for the hall effect sensors relative to the force acting on the fingertips. First, we organized our test area such that the hand is oriented so the fingers try to lift or move the lab's Open Source Leg (OSL) when they're actuated, as seen in figure \ref{fig:fingerForceSetup}. Part of setting up the test area was ensuring enough space for two computers and two Teensy 4.0 boards, to both control the hand while outputting the hall effect sensors' output, and to read the FSR's output.
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.75\linewidth]{Final Project/fingerForceSetup.jpg}
+    \caption{The test setup for calibrating the hall effect sensors.}
+    \label{fig:fingerForceSetup}
+\end{figure}
+Once the test area was organized, we attempted to create the calibration curve for each finger individually by trapping the FSR between the fingertip and the OSL's shaft as seen in figure \ref{fig:fingerForceCloseup}, and then recording both the FSR and hall effect sensor's outputs while progressively moving the finger, using a potentiometer, to increase the pressure exerted on the tip.
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.75\linewidth]{Final Project/fingerForceCloseup.jpg}
+    \caption{Close-up view of the FSR trapped between the OSL's shaft and one of the hand's fingers.}
+    \label{fig:fingerForceCloseup}
+\end{figure}
+
+
+%
+
+\subsection{Training data collection}
+All machine-learning based classifiers require training in order to classify accurately, and that training requires gathering training data. A key requirement of the training data is that it be as similar as possible to the data the classifier will be working with later, and if possible even encompass a wider range of data. To that end, before starting to record data we had to define our sEMG sensor locations. Working under the constraint of having only three sensors (due to limitations of the class's PCB), we chose three sites that we felt were the most likely to provide clean signals, and with enough of a difference between grasps to improve our classification efforts. The sites were picked based both on existing research \cite{hermens_european_1999,batzianoulis_decoding_2018} and on the results of manual palpation while performing the various grasps.
+The final sites chosen for our sEMG sensors target the Flexor Carpum Ulnaris and Flexor Carpum Radialis as seen in figure \ref{fig:flexorSensors}, and the Smaller Forearm Extensors as seen in figure \ref{fig:extensorSensors}.\\
+The sEMG sensors we used in the project are the same sensors from the third homework assignment we previously submitted, set to "ENV" (envelope) mode to reduce the computational load on the Teensy 4.0 board we worked with.
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.75\linewidth]{Final Project/sEMG_Flexors.jpg}
     \caption{sEMG sensors placement on Flexor Carpum Ulnaris (lower left) and Flexor Carpum Radialis (upper center).}
     \label{fig:flexorSensors}
 \end{figure}
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.5\linewidth]{Final Project/sEMG_Extensors.jpg}
+    \includegraphics[width=0.75\linewidth]{Final Project/sEMG_Extensors.jpg}
     \caption{sEMG sensor placement on Smaller Forearm Extensors}
     \label{fig:extensorSensors}
 \end{figure}
 
-The experiment was designed to record a "close" and "open" event every 3 seconds for 5 minutes per grasp. This resulted in approximately 100 observations per grasp. The subject was cued to move on the first beat of each 4/4 measure using a metronome set to 80 BPM, yielding one event every 3 seconds. It's important to add that the subject in question has played the drums for well over a decade, and thus we trust their ability to precisely keep time. In order to avoid signal degradation due to muscle fatigue, we made sure the subject took 10-minute or longer breaks between recordings and kept hydrated.\\
-The recording process itself consisted of using our \href{https://github.com/eladsimantov/Wearable-Robotics/blob/main/Final%20Project/EMG_logger.ino}{EMG\_logger.ino} script to read all three sEMG sensors and print their outputs to serial, while running our \href{https://github.com/eladsimantov/Wearable-Robotics/blob/main/Final%20Project/emg_logging.py}{emg\_logging.py} script. Timekeeping for the recording was simply a case of running a 5 minute timer on one of our smartphones. Our method of avoiding altered signals at the beginning and end of recordings was to start the recording only after the subject had performed one or two open-close cycles, and to stop the recording before asking the subject to stop performing the grasps. Additionally, prior to processing the data we reviewed each recording and chose a new index to start from, one we felt was followed only by "proper" signals.
+Data collection consisted of recording a "close" and "open" event every 3 seconds for 5 minutes per grasp, leading to approximately 100 observations per grasp. The subject was cued to move on the first beat of each 4/4 measure using a metronome set to 80 BPM, yielding one event every 3 seconds. It's important to add that the subject in question has played the drums for well over a decade, and thus we trust their ability to precisely keep time. In order to avoid signal degradation due to muscle fatigue, the subject took 10-minute or longer breaks between recordings and kept hydrated.\\
+The recording process itself consisted of using our \href{https://github.com/eladsimantov/Wearable-Robotics/blob/main/Final%20Project/EMG_logger.ino}{EMG\_logger.ino} script to read all three sEMG sensors and print their outputs to serial, while running our \href{https://github.com/eladsimantov/Wearable-Robotics/blob/main/Final%20Project/emg_logging.py}{emg\_logging.py} script. During the recording, our script had a $20[ms]$ delay built in for a sampling rate of effectively $50[Hz]$, as the code only consisted of 3 "analogRead" actions followed by s similar number of "Serial1.print" actions.\\
+Timekeeping for the recording was simply a case of running a 5 minute timer on one of our smartphones. Our method of avoiding altered signals at the beginning and end of recordings was to start the recording only after the subject had performed one or two open-close cycles, and to stop the recording before asking the subject to stop performing the grasps. Additionally, prior to processing the data we reviewed each recording and chose a new index to start from, one we felt was followed only by "proper" signals.
 
-
-
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=1\linewidth]{Final Project/exampleMediumWrap.png}
-    \caption{Example recorded sEMG signal for the Medium Wrap Grasp of three sEMG channels.}
-    \label{fig:placeholder}
-\end{figure}
-\subsection*{Data processing}
-
+\subsection{Data processing}
 % Preprocessing, filtering, extracting features and labeling the data
 % DEFINE WINDOWS
 
-Each signal segment was chosen to be of size 800ms, with a window size of 800ms and an overlap of 700ms. The windows were split using the built in MATLAB "buffer" function and the labels were defined by the mode (the most occurring label within each window). To label each window (that consists of three sEMG channels) we identified the typical width of an action and labeled it accordingly.  
-We identified six standard time domain features per channel $x_i$ that are relatively easy to compute (18 inputs in total). The mean, RMS, Standard Deviation, Peak Value, Shape Factor and Crest factor are calculated per window (of size $N$) and assumed to enter as input to the classifier.
-We ranked all six features per channel using the Minimum Redundancy Maximum Relevance (MRMR) algorithm, which assigns each feature a relative score by maximizing its mutual information with the label while minimizing redundancy with other features. The MRMR scores in Figure \ref{fig:MVMR} indicate that all proposed features carry useful information, as none were found to be consistently irrelevant across channels. Therefore, all features were retained for subsequent analysis.
-
+Each signal segment was chosen to be of size 800ms, with a window size of 800ms and an overlap of 700ms. The windows were split using the built in MATLAB "buffer" function and the labels were defined by the mode (the most occurring label within each window). To label each window (that consists of three sEMG channels) we identified the typical width of an action. We defined 13 classes, one "phantom" class to account for when the hand is stationary, and 2 classes per grasp (To and From the grasp) where integer labels ("$X.0$") correspond to entering the grasp ("close") and half labels ("$X.5$") correspond to returning back to neutral resting position ("Opened hand"). Based on our prior knowledge of the recording process and on the highly repetitive signals, we added a "label" channel to the dataset holding the segmented data, and added labels to each segment.\\ 
+We then identified six standard time domain features per channel $x_i$ that are relatively easy to compute (18 inputs in total). The mean, RMS, Standard Deviation, Peak Value, Shape Factor, and Crest Factor are calculated per window (of size $N$) and are defined as the classifier's input. The specific equations for calculating the feature for each channel in each window are:
 \begin{equation}
 \begin{aligned}
 \text{Mean} &= \frac{1}{N}\sum_{i=1}^N x_i \\
@@ -144,18 +167,120 @@ We ranked all six features per channel using the Minimum Redundancy Maximum Rele
 \end{aligned}
 \end{equation}
 
+We ranked all six features per channel using the Minimum Redundancy Maximum Relevance (MRMR) algorithm, which assigns each feature a relative score by maximizing its mutual information with the label while minimizing redundancy with other features. The MRMR scores in Figure \ref{fig:MVMR} indicate that all proposed features carry useful information, as none were found to be consistently irrelevant across channels. Therefore, all features were retained for subsequent analysis.
+
+
 \begin{figure}[H]
     \centering
-    \includegraphics[width=1\linewidth]{Final Project/MVMR.png}
+    \includegraphics[width=0.75\linewidth]{Final Project/MVMR.png}
     \caption{Feature Ranking using MVMR.}
     \label{fig:MVMR}
 \end{figure}
 
-\subsection*{Training the Classifier}
-We trained eight different types of classifiers using MATLAB Classification Learner App to gain an initial performance baseline value. We used $20\%$ of the dataset as a test set, and trained using 5-fold cross validation. We found that the most accurate type was the weighted KNN with a validation accuracy of $88\%$. We defined 13 classes, one "phantom" class to account for when the hand is stationary, and 2 classes per grasp (To and From the grasp) where the integer labels correspond to entering the grasp ("close") and the half labels correspond to returning back to neutral resting position ("Opened hand").  
-The initial baseline results are shown in Table \ref{tab:basel_model_perf}. The weighted KNN performed the best, however it cannot be used online due to the limited storage in the Teensy 4.0 (up to 2 MB) and the fact that KNNs rely on large datasets for inference unlike other classifiers (which can be defined parametrically). In addition, we opted to use a fast classifier to reduce lag between user input and actuation. Although the Neural Network produced the second best accuracy, its potential implementation on Teensy board (using the Tiny ML library) would be computationally expensive. For these reasons we chose to use the Linear Discriminant (LD) as it has best performance relative to its computational cost and its storage requirement.  The testing confusion matrix for the LDA is provided in Figure \ref{fig:LDAtestConfusion}. It can be seen that most of the incorrect predictions are the phantom class which will not result in actuation in our control architecture. 
-To further optimize our chosen model we attempted an optimizable LD using Bayesian Optimization however it resulted in little improvement in accuracy. We also changed the number of cross validations from $5$ to $12$ and found no improvements. We also increased the misclassifications costs of most common false prediction in an attempt to improve the model accuracy and found a negative impact on the accuracy.  
-We proceeded to generate the C++ code of the LD classifier so that we could deploy it onto our micro-controller. 
+\subsection{Training the Classifier}
+We trained eight different types of classifiers using MATLAB Classification Learner App to gain an initial performance baseline value. We used $20\%$ of the dataset as a test set, and trained using 5-fold cross validation. We ended up choosing a Linear Discriminant (LD) classifier model, as it has the best performance relative to computational cost ratio of the models we explored, and we wanted to reduce the lag between user input and hand actuation. Other options that we considered were using a Weighted KNN model or using a fully connected neural network, but we discarded them as the Weighted KNN required storing the entire training dataset on our Teensy 4.0 and the neural network required using the TinyML package and would most likely be too performance intensive to run in real-time.\\
+While iterating through the various classification models and along the relevant hyperparameters (including modifying the segmentation) we had MATLAB produce a large number of confusion matrices, which helped us decide between models based not just on their accuracy, but also on the type of errors in each one's output. For example, we saw that certain models tended to mix-up the different half labels (hand opening), which is less of an issue when thinking about an actual controller's performance.
+
+% We found that the most accurate type was the weighted KNN. 
+% The initial baseline results are shown in Table \ref{tab:basel_model_perf}. The weighted KNN performed the best, however it cannot be used online due to the limited storage in the Teensy 4.0 (up to 2 MB) and the fact that KNNs rely on large datasets for inference unlike other classifiers (which can be defined parametrically). In addition, we opted to use a fast classifier to reduce lag between user input and actuation. Although the Neural Network produced the second best accuracy, its potential implementation on Teensy board (using the Tiny ML library) would be computationally expensive. For these reasons we chose to use the Linear Discriminant (LD) as it has best performance relative to its computational cost and its storage requirement.  The testing confusion matrix for the LDA is provided in Figure \ref{fig:LDAtestConfusion}. It can be seen that most of the incorrect predictions are the phantom class which will not result in actuation in our control architecture. 
+% To further optimize our chosen model we attempted an optimizable LD using Bayesian Optimization however it resulted in little improvement in accuracy. We also changed the number of cross validations from $5$ to $12$ and found no improvements. We also increased the misclassifications costs of most common false prediction in an attempt to improve the model accuracy and found a negative impact on the accuracy.  
+% We proceeded to generate the C++ code of the LD classifier so that we could deploy it onto our micro-controller. 
+
+
+
+% training and comparing the classifiers offline
+
+
+\subsection{Deployment and testing}
+We used the MATLAB Coder App to automatically generate compatible and optimized C++ code for our trained LD classifier, and packaged the classifier to a \href{https://github.com/eladsimantov/Wearable-Robotics/blob/main/Final%20Project/predictGraspLD_pkg.zip}{zip file} and imported it into our Arduino IDE for the high level control. We then built servo command profiles for each grasp, based on the servo angle mapping we created for the first part of the project. The complete implementation of the predictor with the sEMG including the servo command profiles is given in \href{https://github.com/eladsimantov/Wearable-Robotics/blob/main/Final%20Project/classificationImplementation.ino}{this code}. 
+Finally, we tested the classifier's real-time performance by re-applying the sEMG sensors to our original subject, and running the above code.\\
+After seeing the results of the classifier's testing and trying a number simple fixes, we decided to build a basic state machine whose input is the classifier's output such that a detected "Ring" grasp toggles the hand open/closed, and a detected "Ventral" grasp progresses the state machine to the next state in the list, with states' order and numbering being set according to figure \ref{fig:classifier}. The state machine's logic can be seen in figure \ref{fig:stateLogicFlow}.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.75\linewidth]{Final Project/stateMachineLogic.drawio.png}
+    \caption{Logic governing the state machine.}
+    \label{fig:stateLogicFlow}
+\end{figure}
+
+
+
+
+
+
+\section{Results}
+\subsection{Hand characterization}
+Once we'd collected all 57 mass/FSR measurements we used Microsoft Excel to fit a curve to them. Although the mass was controlled variable in our measurements, we chose to fit the curve as though the FSR's output is the controlled variable to make calibrating the hall effect sensors easier. FSRs have a non-linear relation between the force acting on them and their voltage output, similar to a voltage divider, and thus we chose to fit second-order polynomial as seen in figure \ref{fig:calibCurve}. The resulting equation of the curve we fit is:
+\begin{equation}
+    y=-0.0011x^2 + 1.6812x + 67.182,
+\end{equation}
+where $y$ is the mass in grams added to the testing jig, and $x$ is the output of the FSR. We feel confident in the calibration curve that was calculated, as the \textit{R-squared} value we received is $R^2=0.9817$.
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.75\linewidth]{Final Project/fsrCalibGraph.png}
+    \caption{The calibration curve produced from our measurements, with added second-order polynomial fit curve.}
+    \label{fig:calibCurve}
+\end{figure}
+
+When measuring the FSR/hall effect measurements we encountered issues with consistently pressing on the FSR with the part of the fingertip the produces the greatest motion of the embedded magnet relative to the hall effect sensor, and even when the force was consistent in both location and direction the hall effect sensors didn't produce entirely consistent outputs. In doing so we fixed the arm in place and placed the FSR on each fingertip. When viewing the FSR readings in real time we found that all fingers could exceed the FSR's full-scale values, which strongly suggests that each finger could theoretically produce a force beyond a peak value of $6.9[N]$, which is calculated from the middle finger's peak FSR reading and the equation for the FSR's calibration curve. In figure \ref{fig:hallCalibFigs} we can see the calibration curves for all five fingers, which produced the following second-order polynomial relations:
+\begin{itemize}
+    \item Thumb: $y_{thumb}=-0.2841x_{thumb}^2 +1891.6x_{thumb} - 3E+6$ , $R^2_{thumb}=0.9656$,
+    \item Index Finger: $y_{index}=0.4512x_{index}^2 -2860.3x_{index}-5E+6$ ,  $R^2_{index}=0.9445$,
+    \item Middle Finger: $y_{middle}=.0012x_{middle}^2 - 3.9622x_{middle} - 428.48$ ,  $R^2_{middle}=0.8691$,
+    \item Ring Finger: $y_{ring}=0.0002x_{ring}^2 - 0.9069x_{ring} + 1032.8$ ,  $R^2_{ring}=0.9897$,
+    \item Pinky: $y_{pinky}=0.0198x_{pinky}^2 - 126.54x_{pinky} + 201968$ ,  $R^2_{pinky}=0.9006$
+\end{itemize}
+where $y_{finger}$ is the FSR reading and $x_{finger}$ is the hall effect sensor reading. We chose to fit a second-order polynomial as the system composed of the FSR, silicon fingertip, and hall effect sensor is inherently non-linear (if only due to the FSR's non-linearity). Our first attempt at fitting a linear curve produced poor results, while the second-order polynomial strikes a balance between improved fit accuracy and avoiding overfitting to noisy data.
+
+\begin{figure}[H]
+    \centering
+    
+    % Row 1
+    \begin{subfigure}{0.3\textwidth}
+        \includegraphics[width=\linewidth]{Final Project/thumbHallFSR.png}
+        \caption{}
+        \label{fig:graph1}
+    \end{subfigure}
+    \begin{subfigure}{0.3\textwidth}
+        \includegraphics[width=\linewidth]{Final Project/indexHallFSR.png}
+        \caption{}
+        \label{fig:graph2}
+    \end{subfigure}
+    \begin{subfigure}{0.3\textwidth}
+        \includegraphics[width=\linewidth]{Final Project/middleHallFSR.png}
+        \caption{}
+        \label{fig:graph3}
+    \end{subfigure}
+
+    % Row 2
+    \begin{subfigure}{0.3\textwidth}
+        \includegraphics[width=\linewidth]{Final Project/ringHallFSR.png}
+        \caption{}
+        \label{fig:graph4}
+    \end{subfigure}
+    \begin{subfigure}{0.3\textwidth}
+        \includegraphics[width=\linewidth]{Final Project/pinkyHallFSR.png}
+        \caption{}
+        \label{fig:graph5}
+    \end{subfigure}
+
+    \caption{FSR/hall effect sensor calibration graphs for all five fingers: (a) Thumb, (b) Index Finger, (c) Middle Finger, (d) Ring Finger, (e)Pinky.}
+    \label{fig:hallCalibFigs}
+\end{figure}
+
+\subsection{Data recording and processing}
+
+We successfully recorded the training data to .csv files. In figure \ref{fig:medWrapSignalRaw} we see a raw signal recording, showing the signals captured on all three sEMG sensors. As the figure shows a raw recording, the altered segments at the beginning and end are still visible - those were later "cut out" to avoid "confusing" the classifier during training, under the assumption that the deployed classifier will be dealing with a continuous input free from those sorts of edge phenomenon.
+ 
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.75\linewidth]{Final Project/exampleMediumWrap.png}
+    \caption{Example recorded sEMG signal for the Medium Wrap Grasp of three sEMG channels.}
+    \label{fig:medWrapSignalRaw}
+\end{figure}
+
+\subsection{Training the Classifier}
+When training different classifier models we found that the most accurate type was a Weighted KNN with a validation accuracy of $88\%$, followed by a fully connected neural network with a validation accuracy of $85.7\%$. In table \ref{tab:basel_model_perf} we see the validation and test accuracies of the various models we tested - remembering that we kept $20\%$ of the recorded data for testing. As we ultimately chose to work with an LD classifier model, its confusion matrix for the test set is provided in Figure \ref{fig:LDAtestConfusion}. It can be seen that most of the incorrect predictions are the phantom class which will not result in actuation in our control architecture, and many of the others are confusion between half labels - meaning labels that the controller would anyway interpret as a signal to open the hand.
 
 \begin{table}[H]
 \centering
@@ -178,54 +303,64 @@ Tree (200 splits)       & 82.27 & 80.98 & ~121 \\
 \end{tabular}
 \end{table}
 
+To further optimize our chosen model we attempted to train (in MATLAB) an optimizable LD using Bayesian Optimization, however it resulted in little improvement in accuracy. We also changed the number of cross validations from $5$ to $12$ and found no improvements. We further explored increasing the misclassifications costs of most common false prediction in an attempt to improve the model accuracy and found a negative impact on the accuracy.
+
+
+
 \begin{figure}[H]
     \centering
-    \includegraphics[width=1\linewidth]{Final Project/LDAtestConfusion.png}
+    \includegraphics[width=0.75\linewidth]{Final Project/LDAtestConfusion.png}
     \caption{The Test Confusion Matrix of the Linear Discriminant Classification Model.}
     \label{fig:LDAtestConfusion}
 \end{figure}
 
-% training and comparing the classifiers offline
+\subsection{Deployment and testing}
+While the chosen LD classifier had a accuracy of $80\%$ when testing in MATLAB, that was not case when we tested the deployed version on the Teensy 4.0. As can be seen in the videos in the \href{https://technionmail-my.sharepoint.com/:f:/g/personal/eitangerber_campus_technion_ac_il/EuPdjAAvQVRHhwPrFDkU-A4BGUIn-qwZFfsgoJK7Ynpw3w?e=cTcdet}{linked folder} (warning - strong language at points), the robotic hand fails to repeat the subject's motions most of the time. Furthermore, after extensive testing we saw the pattern of classifications and misclassifications detailed in table \ref{tab:classTestRes}.
+
+\begin{table}[H]
+\centering
+\caption{Deployed classifier testing results, in no particular order.}
+\label{tab:classTestRes}
+\begin{tabular}{cccc}
+\toprule
+Subject \& Expected Hand Grasp & Most Common Result \\
+\midrule
+Rude       & Ventral \\
+Ventral                     & Ring, sometimes Rude  \\
+Ring     & Ventral  \\
+Medium Wrap  & Ventral  \\
+Adducted Thumb & Ventral  \\
+Large Diameter             & Large Diameter, or Open Hand  \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Later, testing of the state machine yielded results that may or may not be better than the classifier's - once again, video can be found in \href{https://technionmail-my.sharepoint.com/:f:/g/personal/eitangerber_campus_technion_ac_il/Ep9P3XUOts1DgN1QVV8Don8ByB3nUZhGFRVbB1EPEAmpUw?e=BvaK5Y}{another linked folder} (warning - strong language at points).
+
+%We can then use the calibration formula to estimate the force online. 
+ % While our design was successful overall and allowed us to calibrate the FSR, there is plenty of room for improvement, such as using a triangular base with three guides instead of four (to reduce friction and binding) and/or using a flat upper surface to hold weights (rather than the cup shape we used).
+
+\section{Discussion}
+\subsection{Hand characterization}
+ When looking at figure \ref{fig:calibCurve}, we see different regions of mass measurement "density" - these differences stem from the limited possible combinations of the weights used, and limitations in placing a large number of weights in the testing jig. Similar regions can be seen in the FSR reading "density", which stem from a combination of non-linearity of the FSR's output and from torques caused in the test jig when trying to place different weights around a single large 500[gr] weight. Had we planned to make use of the hall effect sensors beyond the characterization task, we would have redesigned the jig to all improved stability and to be less sensitive to the weights' center of mass, to enable more measurements at higher masses with improved accuracy. Also, in terms of actually using the resulting curve, to improve the accuracy of our calculations we would keep our FSR outputs within the range defined in figure \ref{fig:calibCurve}, meaning 0 to 850.
+
+\subsection{Picking a classifier model}
+As seen in table \ref{tab:basel_model_perf} we found that the most accurate model was the Weighted KNN. We didn't continue with it as it requires the full training dataset to function properly, and our dataset's size exceeded the storage capability of a Teensy 4.0 (2MB). The results from training in MATLAB are shown in Table \ref{tab:basel_model_perf}. The weighted KNN performed the best, however it cannot be used online due to the limited storage in the Teensy 4.0 (up to 2 MB) and the fact that KNNs rely on large datasets for inference unlike other classifiers (which can be defined parametrically). In addition, we opted to use a fast classifier to reduce lag between user input and actuation. Although the Neural Network produced the second best accuracy, its potential implementation on Teensy board (using the Tiny ML library) would be computationally expensive. For these reasons we chose to use the Linear Discriminant (LD) as it has best performance relative to its computational cost and its storage requirement.
+
+\subsection{Deployment and testing}
+The results of testing the deployed model do not line-up with the theoretical training results from MATLAB. We believe the major cause of this mismatch is a timing issue that stems from both (a) a combination of using a very simple "delay" function to set the sampling rate when recording the training data and of recording that data directly to .csv in Python rather than a faster format such as .hdf5 (which caused a non-constant sampling rate in the recording), and (b) using Arik's timer code for the sampling rate of the deployed controller (which allowed true $50[Hz]$ sampling).\\
+Testing of the state machine didn't lead to significantly improved results, but we're unsure if that is due to the fundamentally poor inputs it was receiving from the classifier or due to the subject's muscles being fatigued by the time we tested it.
+
+\subsection{Possible improvements}
+Having completed the project with a controller that doesn't quite work, we find ourselves with a number of possible improvements that we identified based on our experience.\\
+First, while the grasps we chose are easy to describe with figure \ref{fig:grasps} they are not the most natural, which may have lead to reduced consistency in performing them and to poorer differentiability when looking at their corresponding sEMG signals. Thus, choosing more natural and diverse grasps may lead to improved results.\\
+Second, as mentioned previously we didn't use Arik's timer code for our training data acquisition. Using the code to enable a true and consistent sampling rate may also improve the results, by ensuring that the classifier is training on data that has similar temporal characteristics to the data it will encounter once it's deployed.\\
+Third, while we had the sEMG sensors set to "ENV" (envelope) mode, and thus recorded a signal that's already undergone some filtering, we believe further real-time filtering on both the training and deployed signals might have lead to less noise confusing the classifier.
 
 
-\subsection*{Deployment}
-We used the MATLAB Coder App to automatically generate compatible and optimized C++ code of our trained LD. We packaged the classifier to a \href{https://github.com/eladsimantov/Wearable-Robotics/blob/main/Final%20Project/predictGraspLD_pkg.zip}{zip file} and imported it into our Arduino IDE for the high level control.
-The complete implementation of the predictor with the sEMG including the servo command profiles is given in ....... % ADD HERE LINk
-
-\section*{Results}
-
-\section*{Force Characterization}
-\subsection*{Calibrating the FSR}
-To calibrate the Force Sensative Resistor (FSR) we designed a testing jig as shown in figure \ref{fig:calibJig}, which uses four smooth steel pins as guides and focuses the mass of the upper part of the jig and its contents onto a circle slightly smaller than the FSR. While our design was successful overall and allowed us to calibrate the FSR, there is plenty of room for improvement, such as using a triangular base with three guides instead of four (to reduce friction and binding) and/or using a flat upper surface to hold weights (rather than the cup shape we used).\\
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=0.3\linewidth]{Final Project/testingJig.jpg}
-    \caption{The calibration jig we designed for calibrating the FSR.}
-    \label{fig:calibJig}
-\end{figure}
-Calibration of the FSR itself was fairly straightforward, and consisted of running the script \href{https://github.com/eladsimantov/Wearable-Robotics/blob/main/Final%20Project/fsrReadCalib.ino}{fsrReadCalib.ino} while the computer was connected to a Teensy 4.0 board, which in turn was connected to a small PCB with a potentiometer and amplifier leading to the FSR itself, and progressively adding weights to the test jig while recording the weight and reading from the FSR at each step. After tuning the potentiometer and amplifier so the FSR's board outputs a fairly steady value, we (following Arik's advice) added a bias to the script so that the FSR's effective output range is 0-1005 - such that under almost zero load (just the jig), the FSR output a value of 2. Once the FSR's "baseline" had been set, we recorded the output under the effects of 57 masses as can be seen in figure \ref{fig:fsrCalibMeas}, ranging from 0 added grams to 800 added grams, while we didn't max-out the FSR at any point, we stopped adding mass as the jig could not hold any more weights without losing stability or some of the weights falling out.\\
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=0.75\linewidth]{Final Project/fsrCalibrationExample.jpeg}
-    \caption{The process of calibrating the FSR, we see weights in the testing jig which is compressing the FSR, while the the computer (left) shows the FSR's outputs in near-real time.}
-    \label{fig:fsrCalibMeas}
-\end{figure}
-Once we'd collected out data, we fit it to a graph to create our calibration curve as seen in figure \ref{fig:calibCurve}. Based on the shape of the data we decided to work with a second-order polynomial fit:
-\begin{equation}
-    y=-0.0011x^2 + 1.6812x + 67.182,
-\end{equation}
-where $y$ is the mass in grams added to the jig, and $x$ is the output of the FSR. We feel confident in the calibration curve that was calculated, as the \textit{R-squared} value we received is $R^2=0.9817$. We further decided that due to the initial steps of the calibration and due to the jig's low mass (3D-printed PLA at 15\% infill), we are treating the jig as massless and not taking it into account in our calculations. We point out that when looking at figure \ref{fig:calibCurve}, we see different regions of mass measurement "density" - these differences stem from the limited possible combinations of the weights used, and limitations in placing a large number of weights in the testing jig. Similar regions can be seen in the FSR reading "density", which stem from a combination of non-linearity of the FSR's output and from torques caused in the test jig when trying to place different weights around a single large 500[gr] weight.\\
-In terms of actually using the resulting curve, to improve the accuracy of our calculations we would keep our FSR outputs within the range defined in figure \ref{fig:calibCurve}, meaning 0 to 850.
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=0.9\linewidth]{Final Project/fsrCalibGraph.png}
-    \caption{The calibration curve produced from our measurements, with added second-order polynomial fit curve.}
-    \label{fig:calibCurve}
-\end{figure}
-
-\section*{Conclusion}
-In this project we manufactured, assembled and programmed a robotic arm to classify and control six different grasps based on sEMG measurements and predefined position profiles. We compared different types of classifiers and deployed a Linear Discriminant classifier onto our micro-controller. 
-The limitations of our solution .... % ADD HERE BULLSHIT
+\section{Conclusions}
+In this project we manufactured, assembled and programmed a robotic arm in an attempt to classify and control six different grasps based solely on sEMG measurements and predefined position profiles. We compared several classifiers offline and deployed the best suited for our use case (LD). We deepened our understanding in Machine Learning methodology for classification, and feature analysis (e.g., MRMR). We compared different types of classifiers and deployed a Linear Discriminant classifier onto our micro-controller. During the process we gained a deeper understanding of the best practices in deployment of our control algorithms, such as utilizing code generation methods with a high level language rather than using large language models (LLMs) directly as many would do at this era. When we deployed the classifier online it was not comparable to the offline version as it highly misclassified our labels. As an attempted solution, we implemented a Finite State Machine to utilize our classifier to switch between grasps and toggle the hand between open and closed.\\
+Our solution faced a number of technical limitations beyond the limitations of our skills and knowledge, including the reliance on low-quality sEMG sensors, the use of a micro-controller with limited power and storage, and the poor design of the robotic hand itself (not the least the use of hall effect sensors).
 
 
 \bibliography{references}
